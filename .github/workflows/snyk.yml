@@ -1,0 +1,46 @@
+name: Snyk Vulnerability Scanning
+
+# Trigger this action on push or pull request to main branch or specific paths (like package.json or package-lock.json)
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.json'
+      - '**/*.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**/*.json'
+      - '**/*.yml'
+
+jobs:
+  snyk:
+    name: Run Snyk Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js (if using Node.js)
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'  # Or specify your preferred version
+
+    - name: Install dependencies
+      run: npm install  # Or `yarn install` if you're using Yarn
+
+    - name: Snyk: Run vulnerability test
+      uses: snyk/actions/node@v1  # Use the official Snyk GitHub Action
+      with:
+        snyk_token: ${{ secrets.SNYK_TOKEN }}  # Access the SNYK_TOKEN secret
+      continue-on-error: true  # This ensures that even if vulnerabilities are found, the job will continue and mark the PR as failing
+
+    - name: Upload Snyk results (optional)
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: snyk-report
+        path: snyk-report.json  # Store the results of the test in a file
